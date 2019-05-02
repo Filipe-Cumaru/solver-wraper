@@ -380,9 +380,9 @@ int main(int argc, char **argv) {
     TPFASolver* solver = new TPFASolver();
     ErrorCode rval;
 
-    // string input_file = "four_part_mesh.h5m";
+    // string input_file = "/base_dir/mesh_files/four_part_mesh.h5m";
     string input_file = "quarto_five_spot_part.h5m";
-    string output_file = "quarto_five_spot_solve.h5m";
+    string output_file = "test_output.h5m";
     string parallel_read_opts = "PARALLEL=READ_PART;PARTITION=PARALLEL_PARTITION;PARALLEL_RESOLVE_SHARED_ENTS";
     string parallel_write_opts = "PARALLEL=WRITE_PART";
 
