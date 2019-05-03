@@ -87,11 +87,9 @@ public:
         Epetra_Vector X (row_map);
 
         cout << "Assembling matrix" << endl;
-        clock_t ts = clock();
         this->assembly_matrix(A, b, volumes, tag_handles);
-        ts = clock() - ts;
-        printf("Done. Time elapsed: %f\n", ((double) ts)/CLOCKS_PER_SEC);
 
+        cout << "Creating linear problem" << endl;
         Epetra_LinearProblem linear_problem (&A, &X, &b);
         AztecOO solver (linear_problem);
 
@@ -305,11 +303,14 @@ private:
             A.InsertGlobalValues(gids[i], row_values[i].size(), &row_values[i][0], &row_indexes[i][0]);
         A.FillComplete();
 
+        // Cleaning heap.
         free(perm_data);
         free(centroid_data);
         free(pressure_data);
         free(flux_data);
         free(gids);
+        delete[] row_values;
+        delete[] row_indexes;
 
         return MB_SUCCESS;
     }
