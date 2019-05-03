@@ -7,6 +7,8 @@
 #include <ctime>
 #include <string>
 
+#include <csignal>
+
 /* MOAB includes */
 #include "moab/Core.hpp"
 #include "moab/MeshTopoUtil.hpp"
@@ -241,29 +243,24 @@ private:
         std::vector<double> c1, c2, k1, k2;
         std::vector<int> *row_indexes = new std::vector<int>[num_vols];
 
-        printf("Allocating memory for perm_data");
         double *perm_data = (double*) calloc(9*num_vols, sizeof(double));
         rval = this->mb->tag_get_data(tag_handles[permeability], volumes, perm_data);
         MB_CHK_ERR(rval);
 
-        printf("Allocating memory for centroid_data");
         double *centroid_data = (double*) calloc(3*num_vols, sizeof(double));
         rval = this->mb->tag_get_data(tag_handles[centroid], volumes, centroid_data);
         MB_CHK_ERR(rval);
 
-        printf("Allocating memory for pressure_data");
         double *pressure_data = (double*) calloc(num_vols, sizeof(double));
         rval = this->mb->tag_get_data(tag_handles[dirichlet], volumes, pressure_data);
         MB_CHK_ERR(rval);
 
-        printf("Allocating memory for flux_data");
         double *flux_data = (double*) calloc(num_vols, sizeof(double));
         rval = this->mb->tag_get_data(tag_handles[neumann], volumes, flux_data);
         MB_CHK_ERR(rval);
 
-        printf("Allocating memory for gids");
         int* gids = (int*) calloc(num_vols, sizeof(int));
-        rval = this->mb->tag_get_data(tag_handles[global_id], volumes, centroid_data);
+        rval = this->mb->tag_get_data(tag_handles[global_id], volumes, gids);
         MB_CHK_ERR(rval);
 
         for (i = 0; i < num_vols; i++) {
@@ -301,6 +298,7 @@ private:
             adjacencies.clear();
         }
 
+        printf("Filling matrix\n");
         for (i = 0; i < num_vols; i++)
             A.InsertGlobalValues(gids[i], row_values[i].size(), &row_values[i][0], &row_indexes[i][0]);
         A.FillComplete();
