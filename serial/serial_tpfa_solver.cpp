@@ -93,6 +93,8 @@ public:
         Epetra_LinearProblem linear_problem (&A, &X, &b);
         AztecOO solver (linear_problem);
 
+        A.Print(cout);
+
         // TODO: Add ML compatibility.
         solver.SetAztecOption(AZ_solver, AZ_gmres_condnum);
         solver.Iterate(1000, 1e-14);
@@ -201,7 +203,7 @@ private:
     ErrorCode setup_tags (Tag tag_handles[5]) {
         ErrorCode rval;
 
-        rval = this->mb->tag_get_handle("GLOBAL_ID", tag_handles[global_id]); MB_CHK_ERR(rval);
+        rval = this->mb->tag_get_handle("MY_GLOBAL_ID", tag_handles[global_id]); MB_CHK_ERR(rval);
         rval = this->mb->tag_get_handle(this->centroid_tag_name.c_str(), tag_handles[centroid]); MB_CHK_ERR(rval);
         rval = this->mb->tag_get_handle(this->perm_tag_name.c_str(), tag_handles[permeability]); MB_CHK_ERR(rval);
         rval = this->mb->tag_get_handle(this->dirichlet_tag_name.c_str(), tag_handles[dirichlet]); MB_CHK_ERR(rval);
@@ -275,6 +277,7 @@ private:
                 rval = this->topo_util->get_bridge_adjacencies(volumes[i], BRIDGE_DIM, 3, adjacencies); MB_CHK_ERR(rval);
                 for (Range::iterator it = adjacencies.begin(); it != adjacencies.end(); it++) {
                     rval = this->mb->tag_get_data(tag_handles[global_id], &(*it), 1, &row_id); MB_CHK_ERR(rval);
+                    row_id -= 1;
                     c2 = {centroid_data[3*row_id], centroid_data[3*row_id+1], centroid_data[3*row_id+2]};
                     k2 = {perm_data[9*row_id], perm_data[9*row_id+1], perm_data[9*row_id+2],
                             perm_data[9*row_id+3], perm_data[9*row_id+4], perm_data[9*row_id+5],
@@ -285,7 +288,7 @@ private:
                     // TODO: Generalize to unstructured grids, i.e., calculate
                     // distance for each element.
                     row_values[i].push_back(-equiv_perm/centroid_dist);
-                    row_indexes[i].push_back(row_id);
+                    row_indexes[i].push_back(++row_id);
                 }
                 diag_coef = -accumulate(row_values[i].begin(), row_values[i].end(), 0.0);
             }
@@ -343,8 +346,8 @@ private:
 
 int main () {
     TPFASolver* solver = new TPFASolver();
-    string input_file = "/home/facsa/Documents/TPFA/mesh_files/tpfa_mesh.h5m";
-    // string input_file = "/home/facsa/Documents/TPFA/tpfa_mesh.h5m";
+    // string input_file = "/home/facsa/Documents/TPFA/mesh_files/tpfa_mesh.h5m";
+    string input_file = "/home/facsa/Documents/TPFA/tpfa_mesh.h5m";
     string output_file = "solution_mesh.h5m";
 
     cout << "Loading file..." << endl;
