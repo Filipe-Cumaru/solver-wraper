@@ -243,6 +243,7 @@ private:
         std::vector<double> c1, c2, k1, k2;
         std::vector<int> *row_indexes = new std::vector<int>[num_vols];
 
+        // Allocating memory for mesh data.
         double *perm_data = (double*) calloc(9*num_vols, sizeof(double));
         rval = this->mb->tag_get_data(tag_handles[permeability], volumes, perm_data);
         MB_CHK_ERR(rval);
@@ -263,6 +264,7 @@ private:
         rval = this->mb->tag_get_data(tag_handles[global_id], volumes, gids);
         MB_CHK_ERR(rval);
 
+        // Main loop of matrix assembly.
         for (i = 0; i < num_vols; i++) {
             if (pressure_data[i] != 0) {
                 diag_coef = 1;
@@ -298,8 +300,8 @@ private:
             adjacencies.clear();
         }
 
-        printf("Filling matrix\n");
-        for (i = 0; i < num_vols; i++)
+        // Filling Epetra matrix.
+        for (i = 0; i < 10; i++)
             A.InsertGlobalValues(gids[i], row_values[i].size(), &row_values[i][0], &row_indexes[i][0]);
         A.FillComplete();
 
