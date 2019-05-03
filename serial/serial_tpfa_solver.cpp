@@ -177,7 +177,7 @@ private:
         return 2*k1_eq*k2_eq/(k1_eq + k2_eq);
     }
 
-    double* calculate_unit_vector (std::vector<double> c1[3], std::vector<double> c2[3]) {
+    double* calculate_unit_vector (std::vector<double> c1, std::vector<double> c2) {
     	/*
     		Calculate the unit vector given two points.
 
@@ -233,28 +233,35 @@ private:
 
         ErrorCode rval;
         Range adjacencies;
-        std::vector<double> row_values, c1, c2, k1, k2;
-        std::vector<int> row_indexes;
         int row_id = -1, num_vols = volumes.size(), i = 0;
         double equiv_perm = 0, centroid_dist = 0, diag_coef = 0;
         double *u = NULL;
 
+        std::vector<double> *row_values = new std::vector<double>[num_vols];
+        std::vector<double> c1, c2, k1, k2;
+        std::vector<int> *row_indexes = new std::vector<int>[num_vols];
+
+        printf("Allocating memory for perm_data");
         double *perm_data = (double*) calloc(9*num_vols, sizeof(double));
         rval = this->mb->tag_get_data(tag_handles[permeability], volumes, perm_data);
         MB_CHK_ERR(rval);
 
+        printf("Allocating memory for centroid_data");
         double *centroid_data = (double*) calloc(3*num_vols, sizeof(double));
         rval = this->mb->tag_get_data(tag_handles[centroid], volumes, centroid_data);
         MB_CHK_ERR(rval);
 
+        printf("Allocating memory for pressure_data");
         double *pressure_data = (double*) calloc(num_vols, sizeof(double));
         rval = this->mb->tag_get_data(tag_handles[dirichlet], volumes, pressure_data);
         MB_CHK_ERR(rval);
 
+        printf("Allocating memory for flux_data");
         double *flux_data = (double*) calloc(num_vols, sizeof(double));
         rval = this->mb->tag_get_data(tag_handles[neumann], volumes, flux_data);
         MB_CHK_ERR(rval);
 
+        printf("Allocating memory for gids");
         int* gids = (int*) calloc(num_vols, sizeof(int));
         rval = this->mb->tag_get_data(tag_handles[global_id], volumes, centroid_data);
         MB_CHK_ERR(rval);
@@ -280,22 +287,22 @@ private:
                     equiv_perm = this->calculate_equivalent_perm(k1, k2, u);
                     // TODO: Generalize to unstructured grids, i.e., calculate
                     // distance for each element.
-                    row_values.push_back(-equiv_perm/centroid_dist);
-                    row_indexes.push_back(row_id);
+                    row_values[i].push_back(-equiv_perm/centroid_dist);
+                    row_indexes[i].push_back(row_id);
                 }
-                diag_coef = -accumulate(row_values.begin(), row_values.end(), 0.0);
+                diag_coef = -accumulate(row_values[i].begin(), row_values[i].end(), 0.0);
             }
-            row_values.push_back(diag_coef);
-            row_indexes.push_back(gids[i]);
+            row_values[i].push_back(diag_coef);
+            row_indexes[i].push_back(gids[i]);
             if (flux_data[i] != -1)
                 b[i] = pressure_data[i] + flux_data[i];
             else
                 b[i] = pressure_data[i];
-            row_values.clear();
-            row_indexes.clear();
             adjacencies.clear();
         }
-        A.InsertGlobalValues(gids[i], row_values.size(), &row_values[0], &row_indexes[0]);
+
+        for (i = 0; i < num_vols; i++)
+            A.InsertGlobalValues(gids[i], row_values[i].size(), &row_values[i][0], &row_indexes[i][0]);
         A.FillComplete();
 
         free(perm_data);
