@@ -1,3 +1,10 @@
+#include <iostream>
+#include <string>
+
+#include "serial_tpfa_solver.h"
+
+using namespace std;
+
 int main () {
     TPFASolver* solver = new TPFASolver();
     // string input_file = "/home/facsa/Documents/TPFA/mesh_files/tpfa_mesh.h5m";

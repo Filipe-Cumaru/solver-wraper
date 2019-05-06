@@ -1,3 +1,24 @@
+/* C++ STL includes */
+#include <iostream>	/* std::cout, std::cin */
+#include <numeric>	/* std::accumulate */
+#include <cstdlib>	/* calloc, free */
+#include <cstdio>	/* printf */
+#include <cmath>	/* sqrt, pow */
+#include <ctime>
+#include <string>
+
+/* MOAB includes */
+#include "moab/Core.hpp"
+#include "moab/MeshTopoUtil.hpp"
+
+/* Trilinos includes */
+#include "Epetra_SerialComm.h"
+#include "Epetra_CrsMatrix.h"
+#include "Epetra_Map.h"
+#include "Epetra_Vector.h"
+#include "Epetra_Version.h"
+#include "AztecOO.h"
+
 #define ALL_PROCS -1
 #define ALL_DIM -1
 #define GHOST_DIM 3
