@@ -93,8 +93,6 @@ public:
         Epetra_LinearProblem linear_problem (&A, &X, &b);
         AztecOO solver (linear_problem);
 
-        // A.Print(cout);
-
         // TODO: Add ML compatibility.
         solver.SetAztecOption(AZ_solver, AZ_gmres_condnum);
         solver.Iterate(1000, 1e-14);
@@ -132,9 +130,9 @@ private:
 
     		Parameters
     		----------
-    		c1: double*
+    		c1: std::vector<double>
     			An array with the coordinates of the first point.
-    		c2: double*
+    		c2: std::vector<double>
     			An array with the coordinates of the second point.
 
     		Returns
@@ -154,9 +152,9 @@ private:
 
 	    	Parameters
 	    	----------
-	    	k1: double*
+	    	k1: std::vector<double>
 	    		An array representing the permeability tensor of the first element.
-	    	k2: double*
+	    	k2: std::vector<double>
 		    	An array representing the permeability tensor of the second element.
 		    u: double*
 		    	An array representing the coordinates of the unit vector.
@@ -176,7 +174,7 @@ private:
   		                    k2[2]*u[2] + k2[5]*u[2] + k2[8]*u[2]};
         double k1_eq = k1_pre[0]*u[0] + k1_pre[1]*u[1] + k1_pre[2]*u[2];
         double k2_eq = k2_pre[0]*u[0] + k2_pre[1]*u[1] + k2_pre[2]*u[2];
-        return 2*k1_eq*k2_eq/(k1_eq + k2_eq);
+        return 2*k1_eq*k2_eq/(k1_eq+k2_eq);
     }
 
     double* calculate_unit_vector (std::vector<double> c1, std::vector<double> c2) {
@@ -185,9 +183,9 @@ private:
 
     		Parameters
     		----------
-    		c1: double*
+    		c1: std::vector<double>
     			An array with the coordinates of the first point.
-    		c2: double*
+    		c2: std::vector<double>
     			An array with the coordinates of the second point.
 
     		Returns
