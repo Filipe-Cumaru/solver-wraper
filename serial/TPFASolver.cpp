@@ -1,4 +1,4 @@
-#include "serial_tpfa_solver.h"
+#include "TPFASolver.h"
 
 using namespace std;
 using namespace moab;
