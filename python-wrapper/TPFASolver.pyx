@@ -1,20 +1,30 @@
 cimport numpy as np
 import numpy as np
 
+from pymoab.core import Core
+
 from libcpp.vector cimport vector
 from libcpp.string cimport string as cxx_string
 
 from . cimport TPFASolver
 
-# TODO: Check how to add compatibility between PyMOAB structures
-# and C++ MOAB ones.
+# TODO:
+# - Check how to add compatibility between PyMOAB structures
+#   and C++ MOAB ones.
+# - Check compatility with Trilinos libraries.
 cdef class TPFA(object):
 
-    # TODO: Add initialization with PyMOAB core instance.
     def __cinit__(self, moab_inst=None):
-        self.inst = new TPFASolver.TPFASolver()
+        """ Constructor """
+        if moab_inst is None:
+            self.inst = new TPFASolver.TPFASolver()
+        else if isinstance(moab_inst, Core):
+            self.inst = moab_inst
+        else:
+            raise ValueError("Constructor argument is not MOAB instance.\n")
 
     def __del__(self):
+        """ Destructor """
         del self.inst
 
     def run(self):

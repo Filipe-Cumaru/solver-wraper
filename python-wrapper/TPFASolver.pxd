@@ -13,7 +13,7 @@ cdef extern from "TPFASolver.h":
         neumann
 
     cdef cppclass TPFASolver:
-        TPFASolver () except +
+        TPFASolver ()
         TPFASolver (Interface *mb)
         ErrorCode run ()
         ErrorCode load_file (cxx_string fname)
