@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup, Extension
 from Cython.Build import cythonize
 import numpy as np
 
@@ -14,10 +14,7 @@ lib_paths = [moab_lib, trilinos_lib]
 
 setup(
     name="TPFASolver",
-    ext_modules=[Extension("TPFA.pyx",
-                        language='c++',
-                        include_dirs=include_paths,
-                        library_dirs=lib_paths)],
+    ext_modules=cythonize("pytpfa/tpfa.pyx", language='c++'),
     version="0.0.1",
     author="Filipe Cumaru",
     author_email="facsa@cin.ufpe.br"

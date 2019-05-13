@@ -1,10 +1,10 @@
 from libcpp.vector cimport vector
 from libcpp.string cimport string as cxx_string
 
-cdef extern from "../serial/TPFASolver.cpp":
+cdef extern from "serial/TPFASolver.cpp":
     pass
 
-cdef extern from "../serial/TPFASolver.h":
+cdef extern from "serial/TPFASolver.h":
     ctypedef enum TagsID:
         global_id
         permeability

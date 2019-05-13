@@ -6,7 +6,7 @@ from pymoab.core import Core
 from libcpp.vector cimport vector
 from libcpp.string cimport string as cxx_string
 
-from . cimport TPFASolver
+from TPFASolver cimport TPFASolver
 
 # TODO:
 # - Check how to add compatibility between PyMOAB structures
@@ -16,12 +16,12 @@ cdef class TPFA(object):
 
     def __cinit__(self, moab_inst=None):
         """ Constructor """
-        if moab_inst is None:
-            self.inst = new TPFASolver.TPFASolver()
-        else if isinstance(moab_inst, Core):
-            self.inst = moab_inst
-        else:
-            raise ValueError("Constructor argument is not a MOAB instance.\n")
+        # if moab_inst is None:
+        self.inst = new TPFASolver.TPFASolver()
+        # elif isinstance(moab_inst, Core):
+        #     self.inst = moab_inst
+        # else:
+        #     raise ValueError("Constructor argument is not a MOAB instance.\n")
 
     def __del__(self):
         """ Destructor """
