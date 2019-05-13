@@ -21,7 +21,7 @@ cdef class TPFA(object):
         else if isinstance(moab_inst, Core):
             self.inst = moab_inst
         else:
-            raise ValueError("Constructor argument is not MOAB instance.\n")
+            raise ValueError("Constructor argument is not a MOAB instance.\n")
 
     def __del__(self):
         """ Destructor """
