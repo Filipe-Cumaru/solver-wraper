@@ -15,7 +15,7 @@ TPFASolver::TPFASolver (Interface *moab_interface) : mb(moab_interface),
                                                     centroid_tag_name("CENTROID"),
                                                     dirichlet_tag_name("DIRICHLET_BC"),
                                                     neumann_tag_name("NEUMANN_BC") {}
-ErrorCode TPFASolver::run () {
+void TPFASolver::run () {
     ErrorCode rval;
     Range volumes;
 
@@ -23,7 +23,10 @@ ErrorCode TPFASolver::run () {
     cout << "Getting volumes" << endl;
     rval = this->mb->get_entities_by_dimension(0, 3, volumes, false);
     cout << "# of volumes: " << volumes.size() << endl;
-    MB_CHK_SET_ERR(rval, "get_entitites_by_dimension failed");
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("get_entitites_by_dimension failed");
+    }
+    // MB_CHK_SET_ERR(rval, "get_entitites_by_dimension failed");
 
     cout << "Setting tags" << endl;
     Tag tag_handles[5];
@@ -34,7 +37,10 @@ ErrorCode TPFASolver::run () {
     }
     this->setup_tags(tag_handles);
     rval = this->mb->tag_get_data(tag_handles[global_id], volumes, (void*) gids);
-    MB_CHK_SET_ERR(rval, "tag_get_data for gids failed");
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("tag_get_data for gids failed");
+    }
+    // MB_CHK_SET_ERR(rval, "tag_get_data for gids failed");
 
     Epetra_SerialComm comm;
     Epetra_Map row_map (volumes.size(), volumes.size(), gids, 0, comm);
@@ -56,27 +62,36 @@ ErrorCode TPFASolver::run () {
     this->set_pressure_tags(X, volumes);
 
     free(gids);
-    return MB_SUCCESS;
+    // return MB_SUCCESS;
 }
 
-ErrorCode TPFASolver::load_file (string fname) {
+void TPFASolver::load_file (string fname) {
     ErrorCode rval;
-    rval = this->mb->load_file(fname.c_str()); MB_CHK_ERR(rval);
-    return MB_SUCCESS;
+    rval = this->mb->load_file(fname.c_str());
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("load_file failed");
+    }
+    // return MB_SUCCESS;
 }
 
-ErrorCode TPFASolver::write_file (string fname) {
+void TPFASolver::write_file (string fname) {
     ErrorCode rval;
     EntityHandle volumes_meshset;
     Range volumes;
     this->mb->create_meshset(0, volumes_meshset);
     rval = this->mb->get_entities_by_dimension(0, 3, volumes, false);
-    MB_CHK_ERR(rval);
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("write_file failed while trying to retrieve volumes");
+    }
     rval = this->mb->add_entities(volumes_meshset, volumes);
-    MB_CHK_ERR(rval);
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("write_file failed while creating meshset");
+    }
     rval = this->mb->write_file(fname.c_str(), 0, 0, &volumes_meshset, 1);
-    MB_CHK_ERR(rval);
-    return MB_SUCCESS;
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("write_file failed");
+    }
+    // return MB_SUCCESS;
 }
 
 double TPFASolver::calculate_centroid_dist (std::vector<double> c1, std::vector<double> c2) {
@@ -153,19 +168,34 @@ double* TPFASolver::calculate_unit_vector (std::vector<double> c1, std::vector<d
     return u;
 }
 
-ErrorCode TPFASolver::setup_tags (Tag tag_handles[5]) {
+void TPFASolver::setup_tags (Tag tag_handles[5]) {
     ErrorCode rval;
 
-    rval = this->mb->tag_get_handle("MY_GLOBAL_ID", tag_handles[global_id]); MB_CHK_ERR(rval);
-    rval = this->mb->tag_get_handle(this->centroid_tag_name.c_str(), tag_handles[centroid]); MB_CHK_ERR(rval);
-    rval = this->mb->tag_get_handle(this->perm_tag_name.c_str(), tag_handles[permeability]); MB_CHK_ERR(rval);
-    rval = this->mb->tag_get_handle(this->dirichlet_tag_name.c_str(), tag_handles[dirichlet]); MB_CHK_ERR(rval);
-    rval = this->mb->tag_get_handle(this->neumann_tag_name.c_str(), tag_handles[neumann]); MB_CHK_ERR(rval);
+    rval = this->mb->tag_get_handle("MY_GLOBAL_ID", tag_handles[global_id]);
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("setup_tags failed while getting handle for global id");
+    }
+    rval = this->mb->tag_get_handle(this->centroid_tag_name.c_str(), tag_handles[centroid]);
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("setup_tags failed while getting handle for centroid");
+    }
+    rval = this->mb->tag_get_handle(this->perm_tag_name.c_str(), tag_handles[permeability]);
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("setup_tags failed while getting handle for permeabiltiy");
+    }
+    rval = this->mb->tag_get_handle(this->dirichlet_tag_name.c_str(), tag_handles[dirichlet]);
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("setup_tags failed while getting handle for pressure");
+    }
+    rval = this->mb->tag_get_handle(this->neumann_tag_name.c_str(), tag_handles[neumann]);
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("setup_tags failed while getting handle for flux");
+    }
 
-    return MB_SUCCESS;
+    // return MB_SUCCESS;
 }
 
-ErrorCode TPFASolver::assembly_matrix (Epetra_CrsMatrix& A, Epetra_Vector& b, Range volumes, Tag* tag_handles) {
+void TPFASolver::assembly_matrix (Epetra_CrsMatrix& A, Epetra_Vector& b, Range volumes, Tag* tag_handles) {
     /*
         Assembly the transmissibility matrix, a.k.a, the coeficient matrix A of the linear
         system to be solved.
@@ -199,23 +229,33 @@ ErrorCode TPFASolver::assembly_matrix (Epetra_CrsMatrix& A, Epetra_Vector& b, Ra
     // Allocating memory for mesh data.
     double *perm_data = (double*) calloc(9*num_vols, sizeof(double));
     rval = this->mb->tag_get_data(tag_handles[permeability], volumes, perm_data);
-    MB_CHK_ERR(rval);
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("tag_get_data failed");
+    }
 
     double *centroid_data = (double*) calloc(3*num_vols, sizeof(double));
     rval = this->mb->tag_get_data(tag_handles[centroid], volumes, centroid_data);
-    MB_CHK_ERR(rval);
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("tag_get_data failed");
+    }
 
     double *pressure_data = (double*) calloc(num_vols, sizeof(double));
     rval = this->mb->tag_get_data(tag_handles[dirichlet], volumes, pressure_data);
-    MB_CHK_ERR(rval);
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("tag_get_data failed");
+    }
 
     double *flux_data = (double*) calloc(num_vols, sizeof(double));
     rval = this->mb->tag_get_data(tag_handles[neumann], volumes, flux_data);
-    MB_CHK_ERR(rval);
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("tag_get_data failed");
+    }
 
     int* gids = (int*) calloc(num_vols, sizeof(int));
     rval = this->mb->tag_get_data(tag_handles[global_id], volumes, gids);
-    MB_CHK_ERR(rval);
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("tag_get_data failed");
+    }
 
     // Main loop of matrix assembly.
     for (i = 0; i < num_vols; i++) {
@@ -227,9 +267,9 @@ ErrorCode TPFASolver::assembly_matrix (Epetra_CrsMatrix& A, Epetra_Vector& b, Ra
             k1 = {perm_data[9*i], perm_data[9*i+1], perm_data[9*i+2],
                     perm_data[9*i+3], perm_data[9*i+4], perm_data[9*i+5],
                     perm_data[9*i+6], perm_data[9*i+7], perm_data[9*i+8]};
-            rval = this->topo_util->get_bridge_adjacencies(volumes[i], BRIDGE_DIM, 3, adjacencies); MB_CHK_ERR(rval);
+            rval = this->topo_util->get_bridge_adjacencies(volumes[i], BRIDGE_DIM, 3, adjacencies);
             for (Range::iterator it = adjacencies.begin(); it != adjacencies.end(); it++) {
-                rval = this->mb->tag_get_data(tag_handles[global_id], &(*it), 1, &row_id); MB_CHK_ERR(rval);
+                rval = this->mb->tag_get_data(tag_handles[global_id], &(*it), 1, &row_id);
                 c2 = {centroid_data[3*row_id], centroid_data[3*row_id+1], centroid_data[3*row_id+2]};
                 k2 = {perm_data[9*row_id], perm_data[9*row_id+1], perm_data[9*row_id+2],
                         perm_data[9*row_id+3], perm_data[9*row_id+4], perm_data[9*row_id+5],
@@ -267,10 +307,10 @@ ErrorCode TPFASolver::assembly_matrix (Epetra_CrsMatrix& A, Epetra_Vector& b, Ra
     delete[] row_values;
     delete[] row_indexes;
 
-    return MB_SUCCESS;
+    // return MB_SUCCESS;
 }
 
-ErrorCode TPFASolver::set_pressure_tags (Epetra_Vector& X, Range& volumes) {
+void TPFASolver::set_pressure_tags (Epetra_Vector& X, Range& volumes) {
     /*
         Create and set values for the pressure on each volume.
 
@@ -289,8 +329,12 @@ ErrorCode TPFASolver::set_pressure_tags (Epetra_Vector& X, Range& volumes) {
     Tag pressure_tag;
     ErrorCode rval;
     rval = this->mb->tag_get_handle("PRESSURE", 1, MB_TYPE_DOUBLE, pressure_tag, MB_TAG_DENSE | MB_TAG_CREAT);
-    MB_CHK_SET_ERR(rval, "tag_get_handle for pressure tag failed");
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("tag_get_handle failed");
+    }
     rval = this->mb->tag_set_data(pressure_tag, volumes, &X[0]);
-    MB_CHK_SET_ERR(rval, "tag_set_data for pressure tag failed");
-    return MB_SUCCESS;
+    if (rval != MB_SUCCESS) {
+        throw runtime_error("tag_set_data failed");
+    }
+    // return MB_SUCCESS;
 }

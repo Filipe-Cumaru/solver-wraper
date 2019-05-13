@@ -9,6 +9,7 @@
 #include <cmath>	/* sqrt, pow */
 #include <ctime>
 #include <string>
+#include <stdexcept>
 
 /* MOAB includes */
 #include "moab/Core.hpp"
@@ -43,16 +44,16 @@ private:
 public:
     TPFASolver ();
     TPFASolver (Interface *moab_interface);
-    ErrorCode run ();
-    ErrorCode load_file (string fname);
-    ErrorCode write_file (string fname);
+    void run ();
+    void load_file (string fname);
+    void write_file (string fname);
 private:
     double calculate_centroid_dist (std::vector<double> c1, std::vector<double> c2);
     double calculate_equivalent_perm (std::vector<double> k1, std::vector<double> k2, double u[3]);
     double* calculate_unit_vector (std::vector<double> c1, std::vector<double> c2);
-    ErrorCode setup_tags (Tag tag_handles[5]);
-    ErrorCode assembly_matrix (Epetra_CrsMatrix& A, Epetra_Vector& b, Range volumes, Tag* tag_handles);
-    ErrorCode set_pressure_tags (Epetra_Vector& X, Range& volumes);
+    void setup_tags (Tag tag_handles[5]);
+    void assembly_matrix (Epetra_CrsMatrix& A, Epetra_Vector& b, Range volumes, Tag* tag_handles);
+    void set_pressure_tags (Epetra_Vector& X, Range& volumes);
 };
 
 #endif
