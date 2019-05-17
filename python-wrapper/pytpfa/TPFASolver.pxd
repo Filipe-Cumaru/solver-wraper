@@ -14,7 +14,7 @@ cdef extern from "serial/TPFASolver.h":
 
     cdef cppclass TPFASolver:
         TPFASolver ()
-        TPFASolver (Interface *mb)
+        TPFASolver (Interface* mb)
         void run ()
         void load_file (cxx_string fname)
         void write_file (cxx_string fname)
